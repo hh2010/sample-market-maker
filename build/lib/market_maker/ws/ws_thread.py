@@ -37,7 +37,7 @@ class BitMEXWebsocket():
     def __del__(self):
         self.exit()
 
-    def connect(self, endpoint="", symbol="XBTUSD", shouldAuth=False):
+    def connect(self, endpoint="", symbol="XBTN15", shouldAuth=True):
         '''Connect to the websocket and initialize data stores.'''
 
         self.logger.debug("Connecting WebSocket.")
@@ -47,7 +47,7 @@ class BitMEXWebsocket():
         # We can subscribe right in the connection querystring, so let's build that.
         # Subscribe to all pertinent endpoints
         subscriptions = [sub + ':' + symbol for sub in ["quote", "trade"]]
-        #subscriptions += ["instrument"]  # We want all of them
+        subscriptions += ["instrument"]  # We want all of them
         if self.shouldAuth:
             subscriptions += [sub + ':' + symbol for sub in ["order", "execution"]]
             subscriptions += ["margin", "position"]
@@ -320,17 +320,12 @@ if __name__ == "__main__":
     # create console handler and set level to debug
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
-
-    fh = logging.FileHandler('/Users/hasanhaq/test.log')
-    fh.setLevel(logging.DEBUG)
-
     ch = logging.StreamHandler()
     # create formatter
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     # add formatter to ch
     ch.setFormatter(formatter)
     logger.addHandler(ch)
-    logger.addHandler(fh)
     ws = BitMEXWebsocket()
     ws.logger = logger
     ws.connect("https://testnet.bitmex.com/api/v1")
