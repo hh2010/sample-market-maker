@@ -4,8 +4,10 @@ import threading
 import traceback
 import ssl
 from time import sleep
+import time
 import json
 import decimal
+import datetime as dt
 import logging
 from market_maker.settings import settings
 from market_maker.auth.APIKeyAuth import generate_expires, generate_signature
@@ -28,7 +30,7 @@ with hooks():  # Python 2/3 compat
 class BitMEXWebsocket():
 
     # Don't grow a table larger than this amount. Helps cap memory usage.
-    MAX_TABLE_LEN = 200
+    MAX_TABLE_LEN = 1000
 
     def __init__(self):
         self.logger = logging.getLogger('root')
@@ -41,12 +43,15 @@ class BitMEXWebsocket():
         '''Connect to the websocket and initialize data stores.'''
 
         self.logger.debug("Connecting WebSocket.")
+
         self.symbol = symbol
         self.shouldAuth = shouldAuth
 
         # We can subscribe right in the connection querystring, so let's build that.
         # Subscribe to all pertinent endpoints
-        subscriptions = [sub + ':' + symbol for sub in ["quote", "trade"]]
+        #subscriptions = [sub + ':' + symbol for sub in ["quote", "trade"]]
+        #subscriptions = [sub + ':' + symbol for sub in ["orderBookL2", "trade"]]
+        subscriptions = [sub + ':' + symbol for sub in ["trade"]]
         #subscriptions += ["instrument"]  # We want all of them
         if self.shouldAuth:
             subscriptions += [sub + ':' + symbol for sub in ["order", "execution"]]
@@ -207,6 +212,13 @@ class BitMEXWebsocket():
 
     def __on_message(self, message):
         '''Handler for parsing WS messages.'''
+        receive_time = dt.datetime.fromtimestamp(time.time())
+        receive_time = dt.datetime.strftime(receive_time, "%H:%M:%S.%f")
+        
+        # not sure why this loggeradapter not working
+        #self.logger = logging.LoggerAdapter(self.logger, extra={'receive_time': receive_time})
+        print(receive_time)
+
         message = json.loads(message)
         self.logger.debug(json.dumps(message))
 
@@ -321,8 +333,8 @@ if __name__ == "__main__":
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
 
-    fh = logging.FileHandler('/Users/hasanhaq/test.log')
-    fh.setLevel(logging.DEBUG)
+    #fh = logging.FileHandler('/home/hh2010/2019-12-09-pm-trd.log')
+    #fh.setLevel(logging.DEBUG)
 
     ch = logging.StreamHandler()
     # create formatter
@@ -330,10 +342,10 @@ if __name__ == "__main__":
     # add formatter to ch
     ch.setFormatter(formatter)
     logger.addHandler(ch)
-    logger.addHandler(fh)
+    #logger.addHandler(fh)
     ws = BitMEXWebsocket()
     ws.logger = logger
-    ws.connect("https://testnet.bitmex.com/api/v1")
+    ws.connect("https://www.bitmex.com/api/v1")
     while(ws.ws.sock.connected):
         sleep(1)
 
